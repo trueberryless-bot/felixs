@@ -348,18 +348,21 @@ export async function fetchPosts(): Promise<AugmentedPost[] | null> {
   const pubMap: Record<string, any> = {};
   for (const p of rawPubs) pubMap[p.id] = p.data;
 
-  const augmentedPosts = rawPosts
-    .filter((post: any) => {
-      const publishedAt = post?.data?.publishedAt;
-      return (
-        typeof publishedAt === "string" &&
-        Number.isFinite(Date.parse(publishedAt))
-      );
-    })
-    .map((post: any) => ({
+  const augmentedPosts: AugmentedPost[] = [];
+  for (const post of rawPosts) {
+    const publishedAt = post?.data?.publishedAt;
+    if (
+      typeof publishedAt !== "string" ||
+      !Number.isFinite(Date.parse(publishedAt))
+    ) {
+      continue;
+    }
+
+    augmentedPosts.push({
       ...post,
       data: { ...post.data, publication: pubMap[post.data.site] || null },
-    }));
+    });
+  }
 
   return augmentedPosts.length > 0 ? augmentedPosts : null;
 }
